@@ -191,8 +191,7 @@
         // === ランダムに出すデータのリスト ===
         const contractors = [
             "来店者本人が契約者", 
-            "同伴者（配偶者・家族など）が契約者", 
-            "来店者は代理人（契約者は来店していない）"
+            "同伴者（配偶者・家族など）が契約者"
         ];
 
         const data = {
@@ -204,12 +203,12 @@
             ],
             purpose: [
                 "機種変更", "他社から乗り換え (MNP)", "新規契約", 
-                "料金プランの見直し", "データ移行・操作の相談", "解約・名義変更"
-            ]
+                "料金プランの見直し", "データ移行・操作の相談", "解約・名義変更予定"
+           ]
         };
 
-        const carriers = ["SoftBank", "Y!mobile", "au (沖縄セルラー)", "docomo", "UQ mobile", "楽天モバイル", "格安SIM"];
-        const devices = ["iPhone 15", "iPhone 14", "iPhone SE (第3世代)", "Galaxy S23", "Pixel 8", "AQUOS sense8", "古いAndroid", "古いiPhone"];
+        const carriers = ["SoftBank", "Y!mobile", "au (沖縄セルラー)", "docomo", "UQ mobile", "楽天モバイル", "ahamo"];
+        const devices = [ "Android", "iPhone"];
 
         const sbPlans = ["ペイトク無制限", "メリハリ無制限+", "ミニフィットプラン+"];
         const ymPlans = ["シンプル2 S", "シンプル2 M", "シンプル2 L"];
@@ -219,7 +218,7 @@
         const gpData = {
             'gp-feature': ["LINE・通話メイン", "YouTube・Netflix等の動画視聴", "Instagram・X等のSNS", "重いゲーム (原神など)", "カメラ・写真撮影", "インターネット検索のみ"],
             'gp-card': ["PayPayカード", "楽天カード", "dカード", "au PAY カード", "イオンカード", "その他のクレカ", "現金派（クレカなし）"],
-            'gp-qr': ["0円 (全く使わない)", "月 3,000円程度 (コンビニ等のみ)", "月 10,000円程度", "月 30,000円程度", "月 50,000円以上 (メイン決済)"],
+            'gp-qr': ["0円 (全く使わない)", "月 3,000円程度 (コンビニ等のみ)", "月 10,000円程度", "月 20,000円程度", "月 40,000円 (メイン決済)","月80,000円以上"],
             'gp-service': ["光回線あり・でんきあり", "光回線あり・でんきなし", "光回線なし・でんきあり", "両方なし (他社利用 または 未契約)"]
         };
 
@@ -236,8 +235,7 @@
         function getRandomDateTime() {
             const days = ["月", "火", "水", "木", "金", "土", "日"];
             const randomDay = days[Math.floor(Math.random() * days.length)];
-            const slot = Math.floor(Math.random() * 21);
-            const hour = 10 + Math.floor(slot / 2);
+            const slot = Math.floor(Math.random() * 21);            const hour = 10 + Math.floor(slot / 2);
             const minute = (slot % 2 === 0) ? "00" : "30";
             return `${randomDay}曜日 ${hour}:${minute}`;
         }
