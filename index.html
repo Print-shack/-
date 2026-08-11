@@ -18,6 +18,54 @@
             color: #333;
         }
         
+        /* タイマー専用のデザイン */
+        .timer-card {
+            background-color: #e2f0fd;
+            border: 2px solid #b8daff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .timer-display {
+            font-size: 3em;
+            font-weight: bold;
+            color: #0056b3;
+            margin: 10px 0;
+            font-variant-numeric: tabular-nums; /* 数字がブレないようにする設定 */
+        }
+        .timer-controls select {
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+        .timer-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-start { background-color: #007bff; color: white; }
+        .btn-start:hover { background-color: #0056b3; }
+        .btn-stop { background-color: #dc3545; color: white; }
+        .btn-stop:hover { background-color: #c82333; }
+        .btn-reset { background-color: #6c757d; color: white; margin-left: 10px; }
+        
+        /* 時間切れの時のアニメーション */
+        .time-up { 
+            color: #dc3545; 
+            animation: blink 1s infinite; 
+        }
+        @keyframes blink { 
+            50% { opacity: 0; } 
+        }
+
         /* グランプリ用チェックボックス（外枠） */
         .grandprix-toggle {
             background-color: #fff3cd;
@@ -44,13 +92,11 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        /* SB/YM専用枠のデザイン */
         .sb-ym-card {
             background-color: #e8f4fd;
             border-left: 5px solid #0056b3;
             display: none;
         }
-        /* グランプリ専用枠のデザイン */
         .gp-section {
             display: none;
             border: 2px dashed #ffc107;
@@ -64,7 +110,6 @@
             color: #d39e00;
             margin-bottom: 10px;
         }
-
         .label {
             font-size: 0.9em;
             color: #666;
@@ -105,6 +150,25 @@
 <body>
 
     <h2>ロープレ設定ジェネレーター</h2>
+
+    <!-- ▼ タイマー機能 ▼ -->
+    <div class="timer-card">
+        <div class="label">⏱ ロープレ用タイマー</div>
+        <div class="timer-display" id="timer-display">05:00</div>
+        <div class="timer-controls">
+            <select id="timer-minutes">
+                <option value="3">3分</option>
+                <option value="5" selected>5分</option>
+                <option value="10">10分</option>
+                <option value="15">15分</option>
+                <option value="20">20分</option>
+            </select>
+            <button class="timer-btn btn-start" id="btn-timer-start" onclick="startTimer()">スタート</button>
+            <button class="timer-btn btn-stop" id="btn-timer-stop" onclick="stopTimer()" style="display:none;">一時停止</button>
+            <button class="timer-btn btn-reset" onclick="resetTimer()">リセット</button>
+        </div>
+    </div>
+    <!-- ▲ タイマー機能ここまで ▲ -->
 
     <!-- 接客グランプリモード切替 -->
     <div class="grandprix-toggle">
@@ -223,6 +287,85 @@
         };
 
 
+        // === タイマー機能のJavaScript ===
+        let timerInterval;
+        let timeLeft = 5 * 60; // 初期設定は5分
+        let isRunning = false;
+
+        const display = document.getElementById('timer-display');
+        const minSelect = document.getElementById('timer-minutes');
+        const startBtn = document.getElementById('btn-timer-start');
+        const stopBtn = document.getElementById('btn-timer-stop');
+
+        // 時間が選択されたらタイマーをその時間でリセット
+        minSelect.addEventListener('change', function() {
+            if (!isRunning) resetTimer();
+        });
+
+        // 画面の数字を更新する関数
+        function updateDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            display.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // タイマースタート
+        function startTimer() {
+            if (isRunning) return;
+            if (timeLeft <= 0) resetTimer(); // 0秒ならリセットしてからスタート
+            
+            isRunning = true;
+            display.classList.remove('time-up');
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'inline-block';
+            minSelect.disabled = true; // 動作中はプルダウンを触れないようにする
+
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateDisplay();
+                } else {
+                    // 時間切れの処理
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    display.classList.add('time-up'); // 文字を赤くして点滅させる
+                    startBtn.style.display = 'inline-block';
+                    stopBtn.style.display = 'none';
+                    minSelect.disabled = false;
+                    startBtn.innerText = "もう一度";
+                    
+                    // バイブレーション機能（対応しているスマホのみ）
+                    if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+                    
+                    // 画面に通知を出す
+                    setTimeout(() => alert("終了時間です！ロープレを終了してください。"), 100);
+                }
+            }, 1000);
+        }
+
+        // タイマー一時停止
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            startBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            startBtn.innerText = "再開";
+            minSelect.disabled = false;
+        }
+
+        // タイマーリセット
+        function resetTimer() {
+            stopTimer();
+            display.classList.remove('time-up');
+            timeLeft = parseInt(minSelect.value) * 60; // プルダウンの時間（分）を秒に変換
+            startBtn.innerText = "スタート";
+            updateDisplay();
+        }
+
+        // ページ読み込み時にタイマーの表示を初期化
+        resetTimer();
+
+
         // === 接客グランプリ枠の表示切替 ===
         function toggleGrandPrix() {
             const isChecked = document.getElementById('mode-grandprix').checked;
@@ -235,7 +378,8 @@
         function getRandomDateTime() {
             const days = ["月", "火", "水", "木", "金", "土", "日"];
             const randomDay = days[Math.floor(Math.random() * days.length)];
-            const slot = Math.floor(Math.random() * 21);            const hour = 10 + Math.floor(slot / 2);
+            const slot = Math.floor(Math.random() * 21);            
+            const hour = 10 + Math.floor(slot / 2);
             const minute = (slot % 2 === 0) ? "00" : "30";
             return `${randomDay}曜日 ${hour}:${minute}`;
         }
@@ -263,7 +407,6 @@
                 const isAlone = currentDemo.includes("単身") || currentDemo.includes("単独");
                 
                 let availableContractors = [...contractors];
-                // 「単身」か「単独」という文字が含まれていたら「同伴者が契約者」をリストから削る
                 if (isAlone) {
                     availableContractors = availableContractors.filter(c => !c.includes("同伴者"));
                 }
