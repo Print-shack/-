@@ -33,15 +33,26 @@
             font-weight: bold;
             color: #0056b3;
             margin: 10px 0;
-            font-variant-numeric: tabular-nums; /* 数字がブレないようにする設定 */
+            font-variant-numeric: tabular-nums;
         }
-        .timer-controls select {
+        
+        /* 数字入力欄（1分刻み）のデザイン */
+        .timer-controls input[type="number"] {
+            width: 70px;
             padding: 10px;
-            font-size: 1em;
+            font-size: 1.2em;
+            text-align: center;
             border-radius: 6px;
             border: 1px solid #ccc;
-            margin-right: 10px;
         }
+        .timer-controls .min-label {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            margin-left: 5px;
+            margin-right: 15px;
+        }
+        
         .timer-btn {
             padding: 10px 20px;
             font-size: 1em;
@@ -55,7 +66,7 @@
         .btn-start:hover { background-color: #0056b3; }
         .btn-stop { background-color: #dc3545; color: white; }
         .btn-stop:hover { background-color: #c82333; }
-        .btn-reset { background-color: #6c757d; color: white; margin-left: 10px; }
+        .btn-reset { background-color: #6c757d; color: white; margin-left: 5px; }
         
         /* 時間切れの時のアニメーション */
         .time-up { 
@@ -156,13 +167,10 @@
         <div class="label">⏱ ロープレ用タイマー</div>
         <div class="timer-display" id="timer-display">05:00</div>
         <div class="timer-controls">
-            <select id="timer-minutes">
-                <option value="3">3分</option>
-                <option value="5" selected>5分</option>
-                <option value="10">10分</option>
-                <option value="15">15分</option>
-                <option value="20">20分</option>
-            </select>
+            <!-- 1分刻みで入力できる欄に変更 -->
+            <input type="number" id="timer-minutes" min="1" max="99" value="5">
+            <span class="min-label">分</span>
+            
             <button class="timer-btn btn-start" id="btn-timer-start" onclick="startTimer()">スタート</button>
             <button class="timer-btn btn-stop" id="btn-timer-stop" onclick="stopTimer()" style="display:none;">一時停止</button>
             <button class="timer-btn btn-reset" onclick="resetTimer()">リセット</button>
@@ -289,17 +297,23 @@
 
         // === タイマー機能のJavaScript ===
         let timerInterval;
-        let timeLeft = 5 * 60; // 初期設定は5分
+        let timeLeft = 5 * 60; 
         let isRunning = false;
 
         const display = document.getElementById('timer-display');
-        const minSelect = document.getElementById('timer-minutes');
+        const minInput = document.getElementById('timer-minutes');
         const startBtn = document.getElementById('btn-timer-start');
         const stopBtn = document.getElementById('btn-timer-stop');
 
-        // 時間が選択されたらタイマーをその時間でリセット
-        minSelect.addEventListener('change', function() {
-            if (!isRunning) resetTimer();
+        // 数字を変更したら、リアルタイムでタイマー表示（05:00の部分）を更新
+        minInput.addEventListener('input', function() {
+            if (!isRunning) {
+                let mins = parseInt(minInput.value);
+                if (!isNaN(mins) && mins > 0) {
+                    timeLeft = mins * 60;
+                    updateDisplay();
+                }
+            }
         });
 
         // 画面の数字を更新する関数
@@ -312,13 +326,22 @@
         // タイマースタート
         function startTimer() {
             if (isRunning) return;
+            
+            // 入力欄が空っぽだったりマイナスだった場合の補正
+            let mins = parseInt(minInput.value);
+            if (isNaN(mins) || mins <= 0) {
+                mins = 1;
+                minInput.value = 1;
+                timeLeft = 60;
+            }
+
             if (timeLeft <= 0) resetTimer(); // 0秒ならリセットしてからスタート
             
             isRunning = true;
             display.classList.remove('time-up');
             startBtn.style.display = 'none';
             stopBtn.style.display = 'inline-block';
-            minSelect.disabled = true; // 動作中はプルダウンを触れないようにする
+            minInput.disabled = true; // 動作中は数字を触れないようにする
 
             timerInterval = setInterval(() => {
                 if (timeLeft > 0) {
@@ -331,7 +354,7 @@
                     display.classList.add('time-up'); // 文字を赤くして点滅させる
                     startBtn.style.display = 'inline-block';
                     stopBtn.style.display = 'none';
-                    minSelect.disabled = false;
+                    minInput.disabled = false;
                     startBtn.innerText = "もう一度";
                     
                     // バイブレーション機能（対応しているスマホのみ）
@@ -350,14 +373,19 @@
             startBtn.style.display = 'inline-block';
             stopBtn.style.display = 'none';
             startBtn.innerText = "再開";
-            minSelect.disabled = false;
+            minInput.disabled = false;
         }
 
         // タイマーリセット
         function resetTimer() {
             stopTimer();
             display.classList.remove('time-up');
-            timeLeft = parseInt(minSelect.value) * 60; // プルダウンの時間（分）を秒に変換
+            let mins = parseInt(minInput.value);
+            if (isNaN(mins) || mins <= 0) {
+                mins = 1;
+                minInput.value = 1;
+            }
+            timeLeft = mins * 60; // 分を秒に変換
             startBtn.innerText = "スタート";
             updateDisplay();
         }
